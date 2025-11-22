@@ -24,7 +24,7 @@ spring:
 
 jwt:
   secret: mySuperSecretKeyThatIsAtLeast32CharactersLong123!
-  expiration: 2592000000
+  expiration: 720
 
 management:
   endpoints:

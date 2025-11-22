@@ -1,11 +1,12 @@
 package net.flaim.controller;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import net.flaim.dto.BaseResponse;
 import net.flaim.dto.auth.AuthResponse;
-import net.flaim.dto.auth.login.LoginRequest;
-import net.flaim.dto.auth.register.RegisterRequest;
+import net.flaim.dto.auth.LoginRequest;
+import net.flaim.dto.auth.RegisterRequest;
 import net.flaim.service.AuthService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,14 +19,20 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/register")
-    public ResponseEntity<BaseResponse<AuthResponse>> register(@Valid @RequestBody RegisterRequest request) {
-        BaseResponse<AuthResponse> response = authService.register(request);
+    public ResponseEntity<BaseResponse<AuthResponse>> register(@Valid @RequestBody RegisterRequest request, HttpServletRequest httpRequest) {
+        BaseResponse<AuthResponse> response = authService.register(request, httpRequest);
         return ResponseEntity.status(response.isSuccess() ? 200 : 400).body(response);
     }
 
     @PostMapping("/login")
-    public ResponseEntity<BaseResponse<AuthResponse>> login(@Valid @RequestBody LoginRequest request) {
-        BaseResponse<AuthResponse> response = authService.login(request);
+    public ResponseEntity<BaseResponse<AuthResponse>> login(@Valid @RequestBody LoginRequest request, HttpServletRequest httpRequest) {
+        BaseResponse<AuthResponse> response = authService.login(request, httpRequest);
+        return ResponseEntity.status(response.isSuccess() ? 200 : 400).body(response);
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<BaseResponse<Void>> logout(@RequestHeader("Authorization") String token) {
+        BaseResponse<Void> response = authService.logout(token.replace("Bearer", "").trim());
         return ResponseEntity.status(response.isSuccess() ? 200 : 400).body(response);
     }
 }

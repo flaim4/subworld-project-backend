@@ -1,4 +1,4 @@
-package net.flaim.dto.auth.login;
+package net.flaim.dto.auth;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
