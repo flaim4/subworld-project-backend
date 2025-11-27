@@ -37,7 +37,7 @@ public class SkinController {
     }
 
     @PatchMapping("/type")
-    public ResponseEntity<BaseResponse<Boolean>> changeSkinType(@RequestParam SkinType skinType, @RequestHeader("Authorization") String token) {
+    public ResponseEntity<BaseResponse<Boolean>> changeType(@RequestParam SkinType skinType, @RequestHeader("Authorization") String token) {
         BaseResponse<Boolean> response = skinService.changeType(sessionService.getUser(token), skinType);
         return ResponseEntity.status(response.isSuccess() ? 200 : 400).body(response);
     }
