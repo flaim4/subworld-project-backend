@@ -3,6 +3,7 @@ package net.flaim.controller;
 import lombok.RequiredArgsConstructor;
 import net.flaim.dto.BaseResponse;
 import net.flaim.dto.auth.AuthResponse;
+import net.flaim.model.SkinType;
 import net.flaim.model.User;
 import net.flaim.repository.SessionRepository;
 import net.flaim.service.SessionService;
@@ -32,6 +33,12 @@ public class SkinController {
     @DeleteMapping("/delete")
     public ResponseEntity<BaseResponse<Boolean>> delete(@RequestHeader("Authorization") String token) {
         BaseResponse<Boolean> response = skinService.delete(sessionService.getUser(token));
+        return ResponseEntity.status(response.isSuccess() ? 200 : 400).body(response);
+    }
+
+    @PatchMapping("/type")
+    public ResponseEntity<BaseResponse<Boolean>> changeSkinType(@RequestParam SkinType skinType, @RequestHeader("Authorization") String token) {
+        BaseResponse<Boolean> response = skinService.changeType(sessionService.getUser(token), skinType);
         return ResponseEntity.status(response.isSuccess() ? 200 : 400).body(response);
     }
 

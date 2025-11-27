@@ -3,6 +3,7 @@ package net.flaim.service;
 import com.fasterxml.jackson.databind.ser.Serializers;
 import lombok.RequiredArgsConstructor;
 import net.flaim.dto.BaseResponse;
+import net.flaim.model.SkinType;
 import net.flaim.repository.SessionRepository;
 import net.flaim.repository.SkinRepository;
 import org.springframework.beans.factory.annotation.Value;
@@ -101,6 +102,26 @@ public class SkinService {
         } catch (Exception e) {
             e.printStackTrace();
             return BaseResponse.error("Failed to create default skin");
+        }
+    }
+
+    public BaseResponse<Boolean> changeType(User user, SkinType newSkinType) {
+        try {
+            Optional<Skin> existingSkin = skinRepository.findByUser(user);
+
+            if (existingSkin.isPresent()) {
+                Skin skin = existingSkin.get();
+                if (skin.getSkinType() == newSkinType) return BaseResponse.success(true);
+                skin.setSkinType(newSkinType);
+                skinRepository.save(skin);
+
+                return BaseResponse.success(true);
+            } else {
+                return BaseResponse.success(true);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return BaseResponse.error(false);
         }
     }
 
