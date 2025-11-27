@@ -25,7 +25,14 @@ public class SkinController {
 
     @PostMapping("/upload")
     public ResponseEntity<BaseResponse<Boolean>> upload(@RequestParam("file") MultipartFile file, @RequestHeader("Authorization") String token) {
-        BaseResponse<Boolean> response = skinService.uploadSkin(sessionService.getUser(token), file);
+        BaseResponse<Boolean> response = skinService.upload(sessionService.getUser(token), file);
         return ResponseEntity.status(response.isSuccess() ? 200 : 400).body(response);
     }
+
+    @DeleteMapping("/delete")
+    public ResponseEntity<BaseResponse<Boolean>> delete(@RequestHeader("Authorization") String token) {
+        BaseResponse<Boolean> response = skinService.delete(sessionService.getUser(token));
+        return ResponseEntity.status(response.isSuccess() ? 200 : 400).body(response);
+    }
+
 }

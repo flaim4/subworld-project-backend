@@ -1,5 +1,6 @@
 package net.flaim.service;
 
+import com.fasterxml.jackson.databind.ser.Serializers;
 import lombok.RequiredArgsConstructor;
 import net.flaim.dto.BaseResponse;
 import net.flaim.repository.SessionRepository;
@@ -27,7 +28,7 @@ public class SkinService {
 
     private final SkinRepository skinRepository;
 
-    public BaseResponse<Boolean> uploadSkin(User user, MultipartFile file) {
+    public BaseResponse<Boolean> upload(User user, MultipartFile file) {
         try {
             Optional<Skin> existingSkin = skinRepository.findByUser(user);
 
@@ -57,7 +58,40 @@ public class SkinService {
         }
     }
 
-    public BaseResponse<Boolean> createDefaultSkin(User user) {
+    public BaseResponse<Boolean> delete(User user) {
+        try {
+            Optional<Skin> existingSkin = skinRepository.findByUser(user);
+
+            if (existingSkin.isPresent()) {
+                Skin skin = existingSkin.get();
+                String skinUrl = skin.getSkinUrl();
+
+                if (skinUrl != null) {
+                    try {
+                        String filename = skinUrl.substring(skinUrl.lastIndexOf("/") + 1);
+                        Path filePath = Paths.get(skinsDirectory).resolve(filename);
+
+                        if (Files.exists(filePath)) {
+                            Files.delete(filePath);
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                skin.setSkinUrl(null);
+                skinRepository.save(skin);
+                return BaseResponse.success(true);
+            } else {
+                return BaseResponse.success(false);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return BaseResponse.error(false);
+        }
+    }
+
+    public BaseResponse<Boolean> createDefault(User user) {
         try {
             Skin skin = new Skin();
             skin.setUser(user);
