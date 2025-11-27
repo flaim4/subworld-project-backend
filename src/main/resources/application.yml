@@ -35,6 +35,9 @@ management:
     health:
       show-details: always
 
+app:
+  skins:
+    directory=skins:
 logging:
   level:
     com.example: DEBUG

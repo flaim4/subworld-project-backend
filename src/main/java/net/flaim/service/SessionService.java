@@ -33,4 +33,10 @@ public class SessionService {
 
         sessionRepository.save(session);
     }
+
+    public User getUser(String token) {
+        return sessionRepository.findByToken(token.replace("Bearer", "").trim())
+                .map(Session::getUser)
+                .orElse(null);
+    }
 }
