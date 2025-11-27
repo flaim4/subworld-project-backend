@@ -22,6 +22,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final SessionService sessionService;
+    private final SkinService skinService;
 
     public BaseResponse<AuthResponse> register(RegisterRequest registerRequest, HttpServletRequest httpRequest) {
         try {
@@ -47,7 +48,7 @@ public class AuthService {
             String token = jwtService.generateToken(user.getUsername());
 
             sessionService.createSession(user, token, httpRequest.getRemoteAddr(), httpRequest.getHeader("User-Agent"));
-
+            skinService.createDefaultSkin(user);
             return BaseResponse.success("User registered successfully", new AuthResponse(token, user.getUsername()));
 
         } catch (Exception e) {

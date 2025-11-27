@@ -48,13 +48,25 @@ public class SkinService {
             Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
             skin.setSkinUrl("/" + skinsDirectory + "/" + filename);
-            skin.setDefaultSkinUrl("");
 
             skinRepository.save(skin);
             return BaseResponse.success(true);
         } catch (Exception e) {
             e.printStackTrace();
             return BaseResponse.error(false);
+        }
+    }
+
+    public BaseResponse<Boolean> createDefaultSkin(User user) {
+        try {
+            Skin skin = new Skin();
+            skin.setUser(user);
+            skin.setDefaultSkinUrl("/" + skinsDirectory + "/" + "default.png");
+            skinRepository.save(skin);
+            return BaseResponse.success(true);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return BaseResponse.error("Failed to create default skin");
         }
     }
 
