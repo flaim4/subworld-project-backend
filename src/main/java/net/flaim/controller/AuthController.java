@@ -8,6 +8,8 @@ import net.flaim.dto.auth.AuthResponse;
 import net.flaim.dto.auth.LoginRequest;
 import net.flaim.dto.auth.RegisterRequest;
 import net.flaim.service.AuthService;
+import net.flaim.service.EmailService;
+import net.flaim.service.SessionService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,6 +19,8 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final AuthService authService;
+    private final SessionService sessionService;
+    private final EmailService emailService;
 
     @PostMapping("/register")
     public ResponseEntity<BaseResponse<AuthResponse>> register(@Valid @RequestBody RegisterRequest request, HttpServletRequest httpRequest) {
@@ -35,4 +39,5 @@ public class AuthController {
         BaseResponse<Void> response = authService.logout(token.replace("Bearer", "").trim());
         return ResponseEntity.status(response.isSuccess() ? 200 : 400).body(response);
     }
+
 }

@@ -101,7 +101,7 @@ public class SkinService {
             return BaseResponse.success(true);
         } catch (Exception e) {
             e.printStackTrace();
-            return BaseResponse.error("Failed to create default skin");
+            return BaseResponse.error(false);
         }
     }
 

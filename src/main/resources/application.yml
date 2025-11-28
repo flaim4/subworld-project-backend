@@ -8,6 +8,19 @@ spring:
     password: "root"
     driver-class-name: com.mysql.cj.jdbc.Driver
 
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username:
+    password:
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+
   jpa:
     hibernate:
       ddl-auto: update
@@ -38,6 +51,8 @@ management:
 app:
   skins:
     directory=skins:
+  base-url: http://localhost:8080
+
 logging:
   level:
     com.example: DEBUG
