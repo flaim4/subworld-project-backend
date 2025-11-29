@@ -22,6 +22,9 @@ public class User {
     @Column(name = "password", nullable = false)
     private String password;
 
+    @Column(name = "verify_email", nullable = false)
+    private boolean verifyEmail;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 

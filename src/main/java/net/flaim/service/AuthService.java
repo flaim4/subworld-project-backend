@@ -23,8 +23,9 @@ public class AuthService {
     private final JwtService jwtService;
     private final SessionService sessionService;
     private final SkinService skinService;
+    private final EmailService emailService;
 
-    public BaseResponse<AuthResponse> register(RegisterRequest registerRequest, HttpServletRequest httpRequest) {
+    public BaseResponse<String> register(RegisterRequest registerRequest, HttpServletRequest httpRequest) {
         try {
             if (userRepository.existsByUsername(registerRequest.getUsername())) {
                 return BaseResponse.error("Username already exists");
@@ -42,14 +43,13 @@ public class AuthService {
             user.setUsername(registerRequest.getUsername());
             user.setEmail(registerRequest.getEmail());
             user.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
+            user.setVerifyEmail(false);
 
             userRepository.save(user);
 
-            String token = jwtService.generateToken(user.getUsername());
+            emailService.sendCodeEmail(registerRequest.getEmail(), emailService.generateVerificationCode());
 
-            sessionService.createSession(user, token, httpRequest.getRemoteAddr(), httpRequest.getHeader("User-Agent"));
-            skinService.createDefault(user);
-            return BaseResponse.success("User registered successfully", new AuthResponse(token, user.getUsername()));
+            return BaseResponse.success("Verification code has been sent to your email");
 
         } catch (Exception e) {
             return BaseResponse.error("Registration failed: " + e.getMessage());
@@ -78,9 +78,9 @@ public class AuthService {
         }
     }
 
-    public BaseResponse<Void> logout(@RequestHeader("Authorization") String token) {
-        if (!sessionRepository.existsByToken(token)) return BaseResponse.error("Session not found");
+    public BaseResponse<Boolean> logout(@RequestHeader("Authorization") String token) {
+        if (!sessionRepository.existsByToken(token)) return BaseResponse.error(false);
         sessionRepository.findByToken(token).ifPresent(sessionRepository::delete);
-        return BaseResponse.success();
+        return BaseResponse.success(true);
     }
 }

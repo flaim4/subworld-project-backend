@@ -18,7 +18,7 @@ spring:
         smtp:
           auth: true
           starttls:
-            enable: true
+            enable: trueW
             required: true
 
   jpa:
@@ -51,7 +51,6 @@ management:
 app:
   skins:
     directory=skins:
-  base-url: http://localhost:8080
 
 logging:
   level:

@@ -23,8 +23,8 @@ public class AuthController {
     private final EmailService emailService;
 
     @PostMapping("/register")
-    public ResponseEntity<BaseResponse<AuthResponse>> register(@Valid @RequestBody RegisterRequest request, HttpServletRequest httpRequest) {
-        BaseResponse<AuthResponse> response = authService.register(request, httpRequest);
+    public ResponseEntity<BaseResponse<String>> register(@Valid @RequestBody RegisterRequest request, HttpServletRequest httpRequest) {
+        BaseResponse<String> response = authService.register(request, httpRequest);
         return ResponseEntity.status(response.isSuccess() ? 200 : 400).body(response);
     }
 
@@ -35,8 +35,8 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<BaseResponse<Void>> logout(@RequestHeader("Authorization") String token) {
-        BaseResponse<Void> response = authService.logout(token.replace("Bearer", "").trim());
+    public ResponseEntity<BaseResponse<Boolean>> logout(@RequestHeader("Authorization") String token) {
+        BaseResponse<Boolean> response = authService.logout(token.replace("Bearer", "").trim());
         return ResponseEntity.status(response.isSuccess() ? 200 : 400).body(response);
     }
 
