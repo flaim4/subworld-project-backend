@@ -2,7 +2,9 @@ package net.flaim.service;
 
 import lombok.RequiredArgsConstructor;
 import net.flaim.dto.BaseResponse;
+import net.flaim.model.EmailVerification;
 import net.flaim.model.User;
+import net.flaim.repository.EmailRepository;
 import net.flaim.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -21,6 +23,7 @@ public class EmailService {
 
     private final JavaMailSender mailSender;
     private final UserRepository userRepository;
+    private final EmailRepository emailRepository;
 
     @Value("${spring.mail.username}")
     private String fromEmail;
@@ -36,6 +39,13 @@ public class EmailService {
         helper.setTo(email);
         helper.setSubject("Подтверждение email адреса");
         helper.setText(content, true);
+
+        EmailVerification emailVerification = new EmailVerification();
+
+        emailVerification.setCode(code);
+        emailVerification.setEmail(email);
+
+        emailRepository.save(emailVerification);
 
         mailSender.send(message);
         return BaseResponse.success(true);
