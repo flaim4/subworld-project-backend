@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import net.flaim.dto.BaseResponse;
 import net.flaim.dto.auth.AuthResponse;
 import net.flaim.dto.auth.LoginRequest;
+import net.flaim.dto.auth.MyCodeRequest;
 import net.flaim.dto.auth.RegisterRequest;
 import net.flaim.service.AuthService;
 import net.flaim.service.EmailService;
@@ -37,6 +38,12 @@ public class AuthController {
     @PostMapping("/logout")
     public ResponseEntity<BaseResponse<Boolean>> logout(@RequestHeader("Authorization") String token) {
         BaseResponse<Boolean> response = authService.logout(token.replace("Bearer", "").trim());
+        return ResponseEntity.status(response.isSuccess() ? 200 : 400).body(response);
+    }
+
+    @PostMapping("/myCode")
+    public ResponseEntity<BaseResponse<Boolean>> myCode(@Valid @RequestBody MyCodeRequest myCodeRequest) {
+        BaseResponse<Boolean> response = emailService.myCode(myCodeRequest);
         return ResponseEntity.status(response.isSuccess() ? 200 : 400).body(response);
     }
 

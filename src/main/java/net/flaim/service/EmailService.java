@@ -2,6 +2,7 @@ package net.flaim.service;
 
 import lombok.RequiredArgsConstructor;
 import net.flaim.dto.BaseResponse;
+import net.flaim.dto.auth.MyCodeRequest;
 import net.flaim.model.EmailVerification;
 import net.flaim.model.User;
 import net.flaim.repository.EmailRepository;
@@ -74,6 +75,47 @@ public class EmailService {
     public int generateVerificationCode() {
         SecureRandom secureRandom = new SecureRandom();
         return 100000 + secureRandom.nextInt(900000);
+    }
+
+    public BaseResponse<Boolean> myCode(MyCodeRequest myCodeRequest) {
+        try {
+            Optional<EmailVerification> emailVerification = emailRepository.findByEmail(myCodeRequest.getEmail());
+
+            if (emailVerification.isEmpty()) {
+                return BaseResponse.success(false);
+            }
+
+            EmailVerification verification = emailVerification.get();
+
+            if (verification.getAttempts() >= 3) {
+                emailRepository.delete(verification);
+                sendCodeEmail(myCodeRequest.getEmail(), generateVerificationCode());
+                return BaseResponse.success("Too many attempts, new code sent", false);
+            }
+
+            if (myCodeRequest.getCode() != verification.getCode()) {
+                verification.setAttempts(verification.getAttempts() + 1);
+                emailRepository.save(verification);
+                return BaseResponse.success(false);
+            }
+
+            Optional<User> user = userRepository.findByEmail(myCodeRequest.getEmail());
+
+            if (user.isEmpty()) {
+                return BaseResponse.success("User not found", false);
+            }
+
+            User userToUpdate = user.get();
+            userToUpdate.setVerifyEmail(true);
+            userRepository.save(userToUpdate);
+            emailRepository.delete(verification);
+
+            return BaseResponse.success("Email has been successfully confirmed", true);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return BaseResponse.error("Verification error:", false);
+        }
     }
 
 }

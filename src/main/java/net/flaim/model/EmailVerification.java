@@ -23,6 +23,9 @@ public class EmailVerification {
     @Column(nullable = false)
     private int code;
 
+    @Column(nullable = false)
+    private int Attempts = 0;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
