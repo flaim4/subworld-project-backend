@@ -9,4 +9,5 @@ import java.util.Optional;
 
 public interface EmailRepository extends JpaRepository<EmailVerification, Long> {
     Optional<EmailVerification> findByEmail(String email);
+    Optional<EmailVerification> findTopByEmailOrderByCreatedAtDesc(String email);
 }

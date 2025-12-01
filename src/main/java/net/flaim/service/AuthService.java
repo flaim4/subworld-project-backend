@@ -47,8 +47,6 @@ public class AuthService {
 
             userRepository.save(user);
 
-            emailService.sendCodeEmail(registerRequest.getEmail(), emailService.generateVerificationCode());
-
             return BaseResponse.success("Verification code has been sent to your email");
 
         } catch (Exception e) {
@@ -59,6 +57,8 @@ public class AuthService {
     public BaseResponse<AuthResponse> login(LoginRequest loginRequest, HttpServletRequest httpRequest) {
         try {
             User user = userRepository.findByUsernameOrEmail(loginRequest.getUsername(), loginRequest.getUsername()).orElse(null);
+
+            if (!user.isVerifyEmail()) return BaseResponse.error("Your account is not verified.");
 
             if (user == null) {
                 return BaseResponse.error("User not found");

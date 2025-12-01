@@ -1,5 +1,6 @@
 package net.flaim.controller;
 
+import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +14,8 @@ import net.flaim.service.EmailService;
 import net.flaim.service.SessionService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -42,8 +45,14 @@ public class AuthController {
     }
 
     @PostMapping("/myCode")
-    public ResponseEntity<BaseResponse<Boolean>> myCode(@Valid @RequestBody MyCodeRequest myCodeRequest) {
-        BaseResponse<Boolean> response = emailService.myCode(myCodeRequest);
+    public ResponseEntity<BaseResponse<String>> myCode(@Valid @RequestBody MyCodeRequest myCodeRequest) {
+        BaseResponse<String> response = emailService.myCode(myCodeRequest);
+        return ResponseEntity.status(response.isSuccess() ? 200 : 400).body(response);
+    }
+
+    @PostMapping("/sendCode")
+    public ResponseEntity<BaseResponse<String>> sendCode(@RequestBody Map<String, String> request) throws MessagingException {
+        BaseResponse<String> response = emailService.sendCodeEmail(request.get("email"), emailService.generateVerificationCode());
         return ResponseEntity.status(response.isSuccess() ? 200 : 400).body(response);
     }
 
