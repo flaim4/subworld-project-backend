@@ -1,17 +1,12 @@
 package net.flaim.controller;
 
 import jakarta.mail.MessagingException;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import net.flaim.dto.BaseResponse;
-import net.flaim.dto.auth.AuthResponse;
-import net.flaim.dto.auth.LoginRequest;
-import net.flaim.dto.auth.MyCodeRequest;
-import net.flaim.dto.auth.RegisterRequest;
+import net.flaim.dto.auth.*;
 import net.flaim.service.AuthService;
 import net.flaim.service.EmailService;
-import net.flaim.service.SessionService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,18 +18,17 @@ import java.util.Map;
 public class AuthController {
 
     private final AuthService authService;
-    private final SessionService sessionService;
     private final EmailService emailService;
 
     @PostMapping("/register")
-    public ResponseEntity<BaseResponse<String>> register(@Valid @RequestBody RegisterRequest request, HttpServletRequest httpRequest) {
-        BaseResponse<String> response = authService.register(request, httpRequest);
+    public ResponseEntity<BaseResponse<String>> register(@Valid @RequestBody RegisterRequest request) {
+        BaseResponse<String> response = authService.register(request);
         return ResponseEntity.status(response.isSuccess() ? 200 : 400).body(response);
     }
 
     @PostMapping("/login")
-    public ResponseEntity<BaseResponse<AuthResponse>> login(@Valid @RequestBody LoginRequest request, HttpServletRequest httpRequest) {
-        BaseResponse<AuthResponse> response = authService.login(request, httpRequest);
+    public ResponseEntity<BaseResponse<AuthResponse>> login(@Valid @RequestBody LoginRequest request) {
+        BaseResponse<AuthResponse> response = authService.login(request);
         return ResponseEntity.status(response.isSuccess() ? 200 : 400).body(response);
     }
 
@@ -44,16 +38,27 @@ public class AuthController {
         return ResponseEntity.status(response.isSuccess() ? 200 : 400).body(response);
     }
 
-    @PostMapping("/myCode")
-    public ResponseEntity<BaseResponse<String>> myCode(@Valid @RequestBody MyCodeRequest myCodeRequest) {
-        BaseResponse<String> response = emailService.myCode(myCodeRequest);
+    @PostMapping("/verify-code")
+    public ResponseEntity<BaseResponse<String>> verifyCode(@Valid @RequestBody MyCodeRequest request) {
+        BaseResponse<String> response = emailService.verifyCode(request);
         return ResponseEntity.status(response.isSuccess() ? 200 : 400).body(response);
     }
 
-    @PostMapping("/sendCode")
-    public ResponseEntity<BaseResponse<String>> sendCode(@RequestBody Map<String, String> request) throws MessagingException {
+    @PostMapping("/send-verification-code")
+    public ResponseEntity<BaseResponse<String>> sendVerificationCode(@RequestBody Map<String, String> request) throws MessagingException {
         BaseResponse<String> response = emailService.sendCodeEmail(request.get("email"), emailService.generateVerificationCode());
         return ResponseEntity.status(response.isSuccess() ? 200 : 400).body(response);
     }
 
+    @PostMapping("/forgot-password")
+    public ResponseEntity<BaseResponse<String>> forgotPassword(@RequestParam String email) throws MessagingException {
+        BaseResponse<String> response = emailService.sendPasswordResetCode(email);
+        return ResponseEntity.status(response.isSuccess() ? 200 : 400).body(response);
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<BaseResponse<String>> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        BaseResponse<String> response = emailService.resetPassword(request);
+        return ResponseEntity.status(response.isSuccess() ? 200 : 400).body(response);
+    }
 }

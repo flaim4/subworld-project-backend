@@ -2,15 +2,17 @@ package net.flaim.model;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.RequiredArgsConstructor;
-
 import java.time.LocalDateTime;
 
 @Entity
-@Data
 @Table(name = "email_verifications")
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class EmailVerification {
 
     @Id
@@ -24,7 +26,8 @@ public class EmailVerification {
     private int code;
 
     @Column(nullable = false)
-    private int Attempts = 0;
+    @Builder.Default
+    private int attempts = 0;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

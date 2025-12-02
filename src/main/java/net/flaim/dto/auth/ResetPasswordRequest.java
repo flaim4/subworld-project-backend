@@ -7,21 +7,18 @@ import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 @Data
-public class RegisterRequest {
-
-    @NotBlank(message = "Username is required")
-    @Pattern(regexp = "^[a-zA-Z0-9_]{3,50}$", message = "Username must contain only letters, numbers and underscores (3-50 characters)")
-    private String username;
+public class ResetPasswordRequest {
 
     @NotBlank(message = "Email is required")
     @Email(message = "Invalid email format")
     private String email;
 
-    @NotBlank(message = "Password is required")
+    @NotBlank(message = "Code is required")
+    @Pattern(regexp = "^\\d{6}$", message = "Code must be 6 digits")
+    private String code;
+
+    @NotBlank(message = "New password is required")
     @Size(min = 6, message = "Password must be at least 6 characters")
     @Pattern(regexp = "^[\\x20-\\x7E]+$", message = "Password contains invalid characters")
-    private String password;
-
-    @NotBlank(message = "Confirm password is required")
-    private String confirmPassword;
+    private String newPassword;
 }

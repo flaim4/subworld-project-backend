@@ -1,25 +1,21 @@
 package net.flaim.service;
 
-import com.fasterxml.jackson.databind.ser.Serializers;
 import lombok.RequiredArgsConstructor;
 import net.flaim.dto.BaseResponse;
 import net.flaim.model.SkinType;
-import net.flaim.repository.SessionRepository;
 import net.flaim.repository.SkinRepository;
-import org.springframework.beans.factory.annotation.Value;
 import net.flaim.model.Skin;
 import net.flaim.model.User;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Optional;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -29,7 +25,7 @@ public class SkinService {
 
     private final SkinRepository skinRepository;
 
-    public BaseResponse<Boolean> upload(User user, MultipartFile file) {
+    public BaseResponse<String> upload(User user, MultipartFile file) {
         try {
             Optional<Skin> existingSkin = skinRepository.findByUser(user);
 
@@ -52,14 +48,14 @@ public class SkinService {
             skin.setSkinUrl("/" + skinsDirectory + "/" + filename);
 
             skinRepository.save(skin);
-            return BaseResponse.success(true);
+            return BaseResponse.success("Skin uploaded successfully");
         } catch (Exception e) {
             e.printStackTrace();
-            return BaseResponse.error(false);
+            return BaseResponse.error("Failed to upload skin");
         }
     }
 
-    public BaseResponse<Boolean> delete(User user) {
+    public BaseResponse<String> delete(User user) {
         try {
             Optional<Skin> existingSkin = skinRepository.findByUser(user);
 
@@ -82,46 +78,52 @@ public class SkinService {
 
                 skin.setSkinUrl(null);
                 skinRepository.save(skin);
-                return BaseResponse.success(true);
+                return BaseResponse.success("Skin deleted successfully");
             } else {
-                return BaseResponse.success(false);
+                return BaseResponse.success("No skin found to delete");
             }
         } catch (Exception e) {
             e.printStackTrace();
-            return BaseResponse.error(false);
+            return BaseResponse.error("Failed to delete skin");
         }
     }
 
-    public BaseResponse<Boolean> createDefault(User user) {
+    public BaseResponse<String> createDefault(User user) {
         try {
             Skin skin = new Skin();
             skin.setUser(user);
             skin.setDefaultSkinUrl("/" + skinsDirectory + "/" + "default.png");
             skinRepository.save(skin);
-            return BaseResponse.success(true);
+            return BaseResponse.success("Default skin created successfully");
         } catch (Exception e) {
             e.printStackTrace();
-            return BaseResponse.error(false);
+            return BaseResponse.error("Failed to create default skin");
         }
     }
 
-    public BaseResponse<Boolean> changeType(User user, SkinType newSkinType) {
+    public BaseResponse<String> changeType(User user, SkinType newSkinType) {
         try {
             Optional<Skin> existingSkin = skinRepository.findByUser(user);
 
             if (existingSkin.isPresent()) {
                 Skin skin = existingSkin.get();
-                if (skin.getSkinType() == newSkinType) return BaseResponse.success(true);
+                if (skin.getSkinType() == newSkinType) {
+                    return BaseResponse.success("Skin type is already " + newSkinType);
+                }
                 skin.setSkinType(newSkinType);
                 skinRepository.save(skin);
 
-                return BaseResponse.success(true);
+                return BaseResponse.success("Skin type changed to " + newSkinType);
             } else {
-                return BaseResponse.success(true);
+                Skin newSkin = new Skin();
+                newSkin.setUser(user);
+                newSkin.setSkinType(newSkinType);
+                skinRepository.save(newSkin);
+                return BaseResponse.success("Skin created with type " + newSkinType);
             }
         } catch (Exception e) {
             e.printStackTrace();
-            return BaseResponse.error(false);
+            return BaseResponse.error("Failed to change skin type");
         }
     }
 

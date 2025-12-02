@@ -18,21 +18,20 @@ public class SkinController {
     private final SessionService sessionService;
 
     @PostMapping("/upload")
-    public ResponseEntity<BaseResponse<Boolean>> upload(@RequestParam("file") MultipartFile file, @RequestHeader("Authorization") String token) {
-        BaseResponse<Boolean> response = skinService.upload(sessionService.getUser(token), file);
+    public ResponseEntity<BaseResponse<String>> upload(@RequestParam("file") MultipartFile file, @RequestHeader("Authorization") String token) {
+        BaseResponse<String> response = skinService.upload(sessionService.getUser(token), file);
         return ResponseEntity.status(response.isSuccess() ? 200 : 400).body(response);
     }
 
     @DeleteMapping("/delete")
-    public ResponseEntity<BaseResponse<Boolean>> delete(@RequestHeader("Authorization") String token) {
-        BaseResponse<Boolean> response = skinService.delete(sessionService.getUser(token));
+    public ResponseEntity<BaseResponse<String>> delete(@RequestHeader("Authorization") String token) {
+        BaseResponse<String> response = skinService.delete(sessionService.getUser(token));
         return ResponseEntity.status(response.isSuccess() ? 200 : 400).body(response);
     }
 
     @PatchMapping("/type")
-    public ResponseEntity<BaseResponse<Boolean>> changeType(@RequestParam SkinType skinType, @RequestHeader("Authorization") String token) {
-        BaseResponse<Boolean> response = skinService.changeType(sessionService.getUser(token), skinType);
+    public ResponseEntity<BaseResponse<String>> changeType(@RequestParam SkinType skinType, @RequestHeader("Authorization") String token) {
+        BaseResponse<String> response = skinService.changeType(sessionService.getUser(token), skinType);
         return ResponseEntity.status(response.isSuccess() ? 200 : 400).body(response);
     }
-
 }

@@ -1,34 +1,40 @@
 package net.flaim.dto;
 
-import lombok.*;
+import lombok.Data;
 
 @Data
-@AllArgsConstructor
-@NoArgsConstructor
 public class BaseResponse<T> {
     private boolean success;
     private String message;
     private T data;
 
-    @Setter @Getter private Object error;
-
     public static <T> BaseResponse<T> success(T data) {
-        return new BaseResponse<>(true, "Success", data, null);
+        BaseResponse<T> response = new BaseResponse<>();
+        response.setSuccess(true);
+        response.setData(data);
+        return response;
+    }
+
+    public static <T> BaseResponse<T> success(String message) {
+        BaseResponse<T> response = new BaseResponse<>();
+        response.setSuccess(true);
+        response.setMessage(message);
+        return response;
     }
 
     public static <T> BaseResponse<T> success(String message, T data) {
-        return new BaseResponse<>(true, message, data, null);
+        BaseResponse<T> response = new BaseResponse<>();
+        response.setSuccess(true);
+        response.setMessage(message);
+        response.setData(data);
+        return response;
     }
 
-    public static BaseResponse<Void> success() {
-        return new BaseResponse<>(true, "Success", null, null);
+    public static <T> BaseResponse<T> error(String message) {
+        BaseResponse<T> response = new BaseResponse<>();
+        response.setSuccess(false);
+        response.setMessage(message);
+        return response;
     }
 
-    public static <T> BaseResponse<T> error(Object error) {
-        return new BaseResponse<>(false, null, null, error);
-    }
-
-    public static <T> BaseResponse<T> error(String message, Object error) {
-        return new BaseResponse<>(false, message, null, error);
-    }
 }

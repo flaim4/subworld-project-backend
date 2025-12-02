@@ -1,86 +1,97 @@
 package net.flaim.service;
 
-import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
 import net.flaim.dto.BaseResponse;
 import net.flaim.dto.auth.AuthResponse;
 import net.flaim.dto.auth.LoginRequest;
-import net.flaim.repository.SessionRepository;
-import org.springframework.stereotype.Service;
-import lombok.RequiredArgsConstructor;
 import net.flaim.dto.auth.RegisterRequest;
 import net.flaim.model.User;
 import net.flaim.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 public class AuthService {
 
     private final UserRepository userRepository;
-    private final SessionRepository sessionRepository;
     private final PasswordEncoder passwordEncoder;
-    private final JwtService jwtService;
-    private final SessionService sessionService;
-    private final SkinService skinService;
-    private final EmailService emailService;
 
-    public BaseResponse<String> register(RegisterRequest registerRequest, HttpServletRequest httpRequest) {
-        try {
-            if (userRepository.existsByUsername(registerRequest.getUsername())) {
-                return BaseResponse.error("Username already exists");
-            }
-
-            if (userRepository.existsByEmail(registerRequest.getEmail())) {
-                return BaseResponse.error("Email already exists");
-            }
-
-            if (!registerRequest.getPassword().equals(registerRequest.getConfirmPassword())) {
-                return BaseResponse.error("Passwords don't match");
-            }
-
-            User user = new User();
-            user.setUsername(registerRequest.getUsername());
-            user.setEmail(registerRequest.getEmail());
-            user.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
-            user.setVerifyEmail(false);
-
-            userRepository.save(user);
-
-            return BaseResponse.success("Verification code has been sent to your email");
-
-        } catch (Exception e) {
-            return BaseResponse.error("Registration failed: " + e.getMessage());
+    @Transactional
+    public BaseResponse<String> register(RegisterRequest request) {
+        if (!request.getPassword().equals(request.getConfirmPassword())) {
+            return BaseResponse.error("Passwords do not match");
         }
+
+        Optional<User> existingUser = userRepository.findByEmail(request.getEmail());
+        if (existingUser.isPresent()) {
+            return BaseResponse.error("User with this email already exists");
+        }
+
+        Optional<User> existingUsername = userRepository.findByUsername(request.getUsername());
+        if (existingUsername.isPresent()) {
+            return BaseResponse.error("Username already taken");
+        }
+
+        String encodedPassword = passwordEncoder.encode(request.getPassword());
+
+        User user = new User();
+        user.setUsername(request.getUsername());
+        user.setEmail(request.getEmail());
+        user.setPassword(encodedPassword);
+        user.setVerifyEmail(false);
+        user.setCreatedAt(LocalDateTime.now());
+
+        userRepository.save(user);
+
+        return BaseResponse.success("Registration successful. Please verify your email.");
     }
 
-    public BaseResponse<AuthResponse> login(LoginRequest loginRequest, HttpServletRequest httpRequest) {
-        try {
-            User user = userRepository.findByUsernameOrEmail(loginRequest.getUsername(), loginRequest.getUsername()).orElse(null);
+    public BaseResponse<AuthResponse> login(LoginRequest request) {
+        Optional<User> user = findUserByIdentifier(request.getUsername());
 
-            if (!user.isVerifyEmail()) return BaseResponse.error("Your account is not verified.");
-
-            if (user == null) {
-                return BaseResponse.error("User not found");
-            }
-
-            if (!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
-                return BaseResponse.error("Invalid password");
-            }
-
-            String token = jwtService.generateToken(user.getUsername());
-
-            sessionService.createSession(user, token, httpRequest.getRemoteAddr(), httpRequest.getHeader("User-Agent"));
-            return BaseResponse.success("Login successful", new AuthResponse(token, user.getUsername()));
-
-        } catch (Exception e) {
-            return BaseResponse.error("Login failed: " + e.getMessage());
+        if (user.isEmpty()) {
+            return BaseResponse.error("Invalid credentials");
         }
+
+        User foundUser = user.get();
+
+        if (!passwordEncoder.matches(request.getPassword(), foundUser.getPassword())) {
+            return BaseResponse.error("Invalid credentials");
+        }
+
+        if (!foundUser.isVerifyEmail()) {
+            return BaseResponse.error("Please verify your email first");
+        }
+
+        String token = generateAuthToken(foundUser);
+
+        AuthResponse authResponse = new AuthResponse();
+        authResponse.setToken(token);
+        authResponse.setUsername(foundUser.getUsername());
+        authResponse.setEmail(foundUser.getEmail());
+
+        return BaseResponse.success(authResponse);
     }
 
-    public BaseResponse<Boolean> logout(@RequestHeader("Authorization") String token) {
-        if (!sessionRepository.existsByToken(token)) return BaseResponse.error(false);
-        sessionRepository.findByToken(token).ifPresent(sessionRepository::delete);
+    public BaseResponse<Boolean> logout(String token) {
         return BaseResponse.success(true);
+    }
+
+    private Optional<User> findUserByIdentifier(String identifier) {
+        if (identifier.contains("@")) {
+            return userRepository.findByEmail(identifier);
+        } else {
+            return userRepository.findByUsername(identifier);
+        }
+    }
+
+    private String generateAuthToken(User user) {
+        String rawToken = user.getId() + ":" + System.currentTimeMillis() + ":" + user.getUsername();
+        return java.util.Base64.getEncoder().encodeToString(rawToken.getBytes());
     }
 }
