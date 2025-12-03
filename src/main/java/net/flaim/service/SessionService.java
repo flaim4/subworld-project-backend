@@ -21,7 +21,6 @@ public class SessionService {
     private int sessionDurationHours;
 
     private final SessionRepository sessionRepository;
-    private final PasswordEncoder passwordEncoder;
 
     public void createSession(User user, String token, String ipAddress, String userAgent) {
         Session session = new Session();
@@ -32,11 +31,5 @@ public class SessionService {
         session.setExpiresAt(LocalDateTime.now().plusHours(sessionDurationHours));
 
         sessionRepository.save(session);
-    }
-
-    public User getUser(String token) {
-        return sessionRepository.findByToken(token.replace("Bearer", "").trim())
-                .map(Session::getUser)
-                .orElse(null);
     }
 }
