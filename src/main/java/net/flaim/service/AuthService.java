@@ -1,11 +1,14 @@
 package net.flaim.service;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import net.flaim.dto.BaseResponse;
 import net.flaim.dto.auth.AuthResponse;
 import net.flaim.dto.auth.LoginRequest;
 import net.flaim.dto.auth.RegisterRequest;
+import net.flaim.model.Session;
 import net.flaim.model.User;
+import net.flaim.repository.SessionRepository;
 import net.flaim.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -19,23 +22,18 @@ import java.util.Optional;
 public class AuthService {
 
     private final UserRepository userRepository;
+    private final SessionService sessionService;
     private final PasswordEncoder passwordEncoder;
 
     @Transactional
     public BaseResponse<String> register(RegisterRequest request) {
-        if (!request.getPassword().equals(request.getConfirmPassword())) {
-            return BaseResponse.error("Passwords do not match");
-        }
+        if (!request.getPassword().equals(request.getConfirmPassword())) return BaseResponse.error("Passwords do not match");
 
         Optional<User> existingUser = userRepository.findByEmail(request.getEmail());
-        if (existingUser.isPresent()) {
-            return BaseResponse.error("User with this email already exists");
-        }
+        if (existingUser.isPresent()) return BaseResponse.error("User with this email already exists");
 
         Optional<User> existingUsername = userRepository.findByUsername(request.getUsername());
-        if (existingUsername.isPresent()) {
-            return BaseResponse.error("Username already taken");
-        }
+        if (existingUsername.isPresent()) return BaseResponse.error("Username already taken");
 
         String encodedPassword = passwordEncoder.encode(request.getPassword());
 
@@ -51,24 +49,20 @@ public class AuthService {
         return BaseResponse.success("Registration successful. Please verify your email.");
     }
 
-    public BaseResponse<AuthResponse> login(LoginRequest request) {
+    public BaseResponse<AuthResponse> login(LoginRequest request, HttpServletRequest httpRequest) {
         Optional<User> user = findUserByIdentifier(request.getUsername());
 
-        if (user.isEmpty()) {
-            return BaseResponse.error("Invalid credentials");
-        }
+        if (user.isEmpty()) return BaseResponse.error("Invalid credentials");
 
         User foundUser = user.get();
 
-        if (!passwordEncoder.matches(request.getPassword(), foundUser.getPassword())) {
-            return BaseResponse.error("Invalid credentials");
-        }
+        if (!passwordEncoder.matches(request.getPassword(), foundUser.getPassword())) return BaseResponse.error("Invalid credentials");
 
-        if (!foundUser.isVerifyEmail()) {
-            return BaseResponse.error("Please verify your email first");
-        }
+        if (!foundUser.isVerifyEmail()) return BaseResponse.error("Please verify your email first");
 
         String token = generateAuthToken(foundUser);
+
+        sessionService.createSession(user.get(), token, httpRequest.getRemoteAddr(), httpRequest.getHeader("User-Agent"));
 
         AuthResponse authResponse = new AuthResponse();
         authResponse.setToken(token);
@@ -76,10 +70,6 @@ public class AuthService {
         authResponse.setEmail(foundUser.getEmail());
 
         return BaseResponse.success(authResponse);
-    }
-
-    public BaseResponse<Boolean> logout(String token) {
-        return BaseResponse.success(true);
     }
 
     private Optional<User> findUserByIdentifier(String identifier) {

@@ -1,12 +1,18 @@
 package net.flaim.controller;
 
 import jakarta.mail.MessagingException;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import net.flaim.annotation.CurrentSession;
+import net.flaim.annotation.RequiresAuth;
 import net.flaim.dto.BaseResponse;
 import net.flaim.dto.auth.*;
+import net.flaim.model.Session;
+import net.flaim.repository.SessionRepository;
 import net.flaim.service.AuthService;
 import net.flaim.service.EmailService;
+import net.flaim.service.SessionService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,6 +25,8 @@ public class AuthController {
 
     private final AuthService authService;
     private final EmailService emailService;
+    private final SessionService sessionService;
+    private final SessionRepository sessionRepository;
 
     @PostMapping("/register")
     public ResponseEntity<BaseResponse<String>> register(@Valid @RequestBody RegisterRequest request) {
@@ -27,15 +35,16 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<BaseResponse<AuthResponse>> login(@Valid @RequestBody LoginRequest request) {
-        BaseResponse<AuthResponse> response = authService.login(request);
+    public ResponseEntity<BaseResponse<AuthResponse>> login(@Valid @RequestBody LoginRequest request, HttpServletRequest httpRequest) {
+        BaseResponse<AuthResponse> response = authService.login(request, httpRequest);
         return ResponseEntity.status(response.isSuccess() ? 200 : 400).body(response);
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<BaseResponse<Boolean>> logout(@RequestHeader("Authorization") String token) {
-        BaseResponse<Boolean> response = authService.logout(token.replace("Bearer", "").trim());
-        return ResponseEntity.status(response.isSuccess() ? 200 : 400).body(response);
+    @RequiresAuth
+    public ResponseEntity<BaseResponse<Boolean>> logout(@CurrentSession Session session) {
+        sessionRepository.delete(session);
+        return ResponseEntity.ok(BaseResponse.success("Logged out", true));
     }
 
     @PostMapping("/verify-code")

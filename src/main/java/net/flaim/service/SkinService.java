@@ -33,9 +33,7 @@ public class SkinService {
             skin.setUser(user);
 
             Path userDir = Paths.get(skinsDirectory);
-            if (!Files.exists(userDir)) {
-                Files.createDirectories(userDir);
-            }
+            if (!Files.exists(userDir)) Files.createDirectories(userDir);
 
             String originalFileName = file.getOriginalFilename();
             String fileExtension = getFileExtension(originalFileName);
@@ -50,7 +48,6 @@ public class SkinService {
             skinRepository.save(skin);
             return BaseResponse.success("Skin uploaded successfully");
         } catch (Exception e) {
-            e.printStackTrace();
             return BaseResponse.error("Failed to upload skin");
         }
     }
@@ -64,16 +61,10 @@ public class SkinService {
                 String skinUrl = skin.getSkinUrl();
 
                 if (skinUrl != null) {
-                    try {
-                        String filename = skinUrl.substring(skinUrl.lastIndexOf("/") + 1);
-                        Path filePath = Paths.get(skinsDirectory).resolve(filename);
+                    String filename = skinUrl.substring(skinUrl.lastIndexOf("/") + 1);
+                    Path filePath = Paths.get(skinsDirectory).resolve(filename);
 
-                        if (Files.exists(filePath)) {
-                            Files.delete(filePath);
-                        }
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+                    if (Files.exists(filePath)) Files.delete(filePath);
                 }
 
                 skin.setSkinUrl(null);
@@ -83,7 +74,6 @@ public class SkinService {
                 return BaseResponse.success("No skin found to delete");
             }
         } catch (Exception e) {
-            e.printStackTrace();
             return BaseResponse.error("Failed to delete skin");
         }
     }
@@ -96,7 +86,6 @@ public class SkinService {
             skinRepository.save(skin);
             return BaseResponse.success("Default skin created successfully");
         } catch (Exception e) {
-            e.printStackTrace();
             return BaseResponse.error("Failed to create default skin");
         }
     }
@@ -107,9 +96,7 @@ public class SkinService {
 
             if (existingSkin.isPresent()) {
                 Skin skin = existingSkin.get();
-                if (skin.getSkinType() == newSkinType) {
-                    return BaseResponse.success("Skin type is already " + newSkinType);
-                }
+                if (skin.getSkinType() == newSkinType) return BaseResponse.success("Skin type is already " + newSkinType);
                 skin.setSkinType(newSkinType);
                 skinRepository.save(skin);
 
@@ -122,7 +109,6 @@ public class SkinService {
                 return BaseResponse.success("Skin created with type " + newSkinType);
             }
         } catch (Exception e) {
-            e.printStackTrace();
             return BaseResponse.error("Failed to change skin type");
         }
     }

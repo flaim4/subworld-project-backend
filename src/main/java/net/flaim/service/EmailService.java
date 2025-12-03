@@ -44,9 +44,7 @@ public class EmailService {
             EmailVerification last = lastVerification.get();
             LocalDateTime now = LocalDateTime.now();
             LocalDateTime twoMinutesAgo = now.minusMinutes(2);
-            if (last.getCreatedAt().isAfter(twoMinutesAgo)) {
-                return BaseResponse.error("You've made too many requests.");
-            }
+            if (last.getCreatedAt().isAfter(twoMinutesAgo)) return BaseResponse.error("You've made too many requests.");
         }
 
         EmailVerification emailVerification = new EmailVerification();
@@ -64,16 +62,12 @@ public class EmailService {
         try {
             Optional<EmailVerification> emailVerificationOpt = emailRepository.findByEmail(myCodeRequest.getEmail());
 
-            if (emailVerificationOpt.isEmpty()) {
-                return BaseResponse.error("There is no user with this email address");
-            }
+            if (emailVerificationOpt.isEmpty()) return BaseResponse.error("There is no user with this email address");
 
             EmailVerification verification = emailVerificationOpt.get();
 
             VerificationResult verificationResult = validateVerificationCode(verification, myCodeRequest.getCode());
-            if (!verificationResult.isValid()) {
-                return BaseResponse.error(verificationResult.getErrorMessage());
-            }
+            if (!verificationResult.isValid()) return BaseResponse.error(verificationResult.getErrorMessage());
 
             User user = userRepository.findByEmail(myCodeRequest.getEmail()).orElseThrow();
             user.setVerifyEmail(true);
@@ -123,9 +117,7 @@ public class EmailService {
         try {
             Optional<EmailVerification> resetVerificationOpt = emailRepository.findByEmail(request.getEmail());
 
-            if (resetVerificationOpt.isEmpty()) {
-                return BaseResponse.error("No reset code found for this email");
-            }
+            if (resetVerificationOpt.isEmpty()) return BaseResponse.error("No reset code found for this email");
 
             EmailVerification verification = resetVerificationOpt.get();
 
@@ -137,9 +129,7 @@ public class EmailService {
             }
 
             VerificationResult verificationResult = validateResetCode(verification, code);
-            if (!verificationResult.isValid()) {
-                return BaseResponse.error(verificationResult.getErrorMessage());
-            }
+            if (!verificationResult.isValid()) return BaseResponse.error(verificationResult.getErrorMessage());
 
             User user = userRepository.findByEmail(request.getEmail()).orElseThrow();
             String encodedPassword = passwordEncoder.encode(request.getNewPassword());
@@ -161,22 +151,16 @@ public class EmailService {
 
     private BaseResponse<String> validateEmailOperation(String email, EmailOperationType operationType) {
         Optional<User> userOpt = userRepository.findByEmail(email);
-        if (userOpt.isEmpty()) {
-            return BaseResponse.error("There is no user with this email address");
-        }
+        if (userOpt.isEmpty()) return BaseResponse.error("There is no user with this email address");
 
         User user = userOpt.get();
 
         switch (operationType) {
             case VERIFICATION:
-                if (user.isVerifyEmail()) {
-                    return BaseResponse.error("Email already verified");
-                }
+                if (user.isVerifyEmail()) return BaseResponse.error("Email already verified");
                 break;
             case PASSWORD_RESET:
-                if (!user.isVerifyEmail()) {
-                    return BaseResponse.error("Email not verified");
-                }
+                if (!user.isVerifyEmail()) return BaseResponse.error("Email not verified");
                 break;
         }
 
