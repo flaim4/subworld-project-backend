@@ -26,7 +26,7 @@ public class Skin {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "skin_type", nullable = false)
-    private SkinType skinType = SkinType.AUTO;
+    private SkinType skinType = SkinType.CLASSIC;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
