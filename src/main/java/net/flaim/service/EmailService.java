@@ -95,9 +95,7 @@ public class EmailService {
             EmailVerification last = lastResetCode.get();
             LocalDateTime now = LocalDateTime.now();
             LocalDateTime twoMinutesAgo = now.minusMinutes(2);
-            if (last.getCreatedAt().isAfter(twoMinutesAgo)) {
-                return BaseResponse.error("You've made too many requests.");
-            }
+            if (last.getCreatedAt().isAfter(twoMinutesAgo)) return BaseResponse.error("You've made too many requests.");
         }
 
         int resetCode = generateVerificationCode();

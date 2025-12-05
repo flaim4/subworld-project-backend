@@ -35,11 +35,10 @@ spring:
   web:
     locale: en
 
-jwt:
-  secret: mySuperSecretKeyThatIsAtLeast32CharactersLong123!
-  expiration: 720
-
 app:
+  token:
+    secret: r5QgSFRyV8L9f3wEMBZY2Xonkize0txGhW7COmND6qp
+    expiration-hours: 720
   skins:
     directory: ./uploads/skins
     url-prefix: /skins

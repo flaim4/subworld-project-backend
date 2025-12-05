@@ -67,9 +67,8 @@ public class SkinService {
             if (!Files.exists(skinsDir)) Files.createDirectories(skinsDir);
 
             String filename = "skin_" + user.getId() + ".png";
-            Path filePath = skinsDir.resolve(filename);
 
-            Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+            Files.copy(file.getInputStream(), skinsDir.resolve(filename), StandardCopyOption.REPLACE_EXISTING);
 
             String skinUrl = skinsUrlPrefix + "/" + filename;
             skin.setSkinUrl(skinUrl);
@@ -144,6 +143,7 @@ public class SkinService {
                 return BaseResponse.success("Skin created with type " + newSkinType);
             }
         } catch (Exception e) {
+            e.printStackTrace();
             return BaseResponse.error("Failed to change skin type: " + e.getMessage());
         }
     }

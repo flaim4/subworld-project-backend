@@ -2,11 +2,9 @@ package net.flaim.aspect;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
-import net.flaim.annotation.RequiresAuth;
 import net.flaim.annotation.CurrentSession;
 import net.flaim.exception.UnauthorizedException;
 import net.flaim.model.Session;
-import net.flaim.repository.SessionRepository;
 import net.flaim.service.SessionService;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -17,36 +15,32 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.lang.reflect.Parameter;
+import java.util.Optional;
 
 @Aspect
 @Component
 @RequiredArgsConstructor
 public class AuthAspect {
 
-    private final SessionRepository sessionRepository;
+    private final SessionService sessionService;
 
     @Around("@annotation(net.flaim.annotation.RequiresAuth)")
     public Object checkAuth(ProceedingJoinPoint joinPoint) throws Throwable {
-        HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
-
-        String authHeader = request.getHeader("Authorization");
+        String authHeader = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest().getHeader("Authorization");
 
         if (authHeader == null || authHeader.isBlank()) throw new UnauthorizedException("Authorization header is required");
 
-        if (!authHeader.startsWith("Bearer ")) throw new UnauthorizedException("Invalid authorization format. " + "Expected format: 'Bearer <token>'. " + "Received: '" + authHeader + "'");
+        if (!authHeader.startsWith("Bearer ")) throw new UnauthorizedException("Invalid authorization format. Expected format: 'Bearer <token>'. " + "Received: '" + authHeader + "'");
 
         String token = authHeader.substring(7).trim();
 
         if (token.isBlank()) throw new UnauthorizedException("Token is empty after 'Bearer '");
 
-        Session session = sessionRepository.findByToken(token).orElseThrow(() -> new UnauthorizedException("Invalid or expired token. " + "Please login again."));
+        Optional<Session> sessionOpt = sessionService.validateAndGetSession(token);
 
-        if (!session.isActive()) throw new UnauthorizedException("Session has expired. Please login again.");
+        if (sessionOpt.isEmpty()) throw new UnauthorizedException("Invalid or expired token. Please login again.");
 
-        session.setLastAccessedAt(java.time.LocalDateTime.now());
-        sessionRepository.save(session);
-
-        Object[] args = injectSession(joinPoint, session);
+        Object[] args = injectSession(joinPoint, sessionOpt.get());
 
         return joinPoint.proceed(args);
     }
