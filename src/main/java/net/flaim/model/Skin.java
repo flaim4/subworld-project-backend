@@ -22,7 +22,7 @@ public class Skin {
     private String skinUrl;
 
     @Column(name = "default_skin_url", nullable = false)
-    private String defaultSkinUrl;
+    private String defaultSkinUrl = "/skins/default.png";
 
     @Enumerated(EnumType.STRING)
     @Column(name = "skin_type", nullable = false)

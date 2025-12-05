@@ -1,5 +1,6 @@
 package net.flaim.service;
 
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import net.flaim.dto.BaseResponse;
 import net.flaim.model.SkinType;
@@ -20,35 +21,64 @@ import java.util.Optional;
 @Service
 @RequiredArgsConstructor
 public class SkinService {
-    @Value("${app.skins.directory:skins}")
+    @Value("${app.skins.directory:./uploads/skins}")
     private String skinsDirectory;
+
+    @Value("${app.skins.url-prefix:/skins}")
+    private String skinsUrlPrefix;
+
+    @Value("${app.skins.default-skin:default.png}")
+    private String defaultSkin;
+
+    @Value("${app.skins.max-size-mb:10}")
+    private int maxSizeMb;
+
+    private long maxFileSizeBytes;
 
     private final SkinRepository skinRepository;
 
+    @PostConstruct
+    public void init() {
+        try {
+            Path path = Paths.get(skinsDirectory);
+            if (!Files.exists(path)) Files.createDirectories(path);
+
+            maxFileSizeBytes = maxSizeMb * 1024L * 1024L;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     public BaseResponse<String> upload(User user, MultipartFile file) {
         try {
-            Optional<Skin> existingSkin = skinRepository.findByUser(user);
+            if (file.isEmpty()) return BaseResponse.error("File is empty");
 
-            Skin skin = existingSkin.orElse(new Skin());
+            if (file.getSize() > maxFileSizeBytes) return BaseResponse.error("File size exceeds " + maxSizeMb + " MB limit");
+
+            String contentType = file.getContentType();
+            if (contentType == null || !contentType.equals("image/png")) return BaseResponse.error("Only PNG files are allowed");
+
+            if (!isPngFile(file.getOriginalFilename())) return BaseResponse.error("File must have .png extension");
+
+            Skin skin = skinRepository.findByUser(user).orElse(new Skin());
             skin.setUser(user);
 
-            Path userDir = Paths.get(skinsDirectory);
-            if (!Files.exists(userDir)) Files.createDirectories(userDir);
+            Path skinsDir = Paths.get(skinsDirectory).toAbsolutePath();
+            if (!Files.exists(skinsDir)) Files.createDirectories(skinsDir);
 
-            String originalFileName = file.getOriginalFilename();
-            String fileExtension = getFileExtension(originalFileName);
+            String filename = "skin_" + user.getId() + ".png";
+            Path filePath = skinsDir.resolve(filename);
 
-            String filename = "skin_" + user.getId() + "." + fileExtension;
-
-            Path filePath = userDir.resolve(filename);
             Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
-            skin.setSkinUrl("/" + skinsDirectory + "/" + filename);
-
+            String skinUrl = skinsUrlPrefix + "/" + filename;
+            skin.setSkinUrl(skinUrl);
             skinRepository.save(skin);
-            return BaseResponse.success("Skin uploaded successfully");
+
+            return BaseResponse.success("PNG skin uploaded successfully");
         } catch (Exception e) {
-            return BaseResponse.error("Failed to upload skin");
+            e.printStackTrace();
+            return BaseResponse.error("Failed to upload skin: " + e.getMessage());
         }
     }
 
@@ -60,9 +90,8 @@ public class SkinService {
                 Skin skin = existingSkin.get();
                 String skinUrl = skin.getSkinUrl();
 
-                if (skinUrl != null) {
-                    String filename = skinUrl.substring(skinUrl.lastIndexOf("/") + 1);
-                    Path filePath = Paths.get(skinsDirectory).resolve(filename);
+                if (skinUrl != null && skinUrl.startsWith(skinsUrlPrefix)) {
+                    Path filePath = Paths.get(skinsDirectory).resolve(skinUrl.substring(skinUrl.lastIndexOf("/") + 1)).toAbsolutePath();
 
                     if (Files.exists(filePath)) Files.delete(filePath);
                 }
@@ -74,19 +103,26 @@ public class SkinService {
                 return BaseResponse.success("No skin found to delete");
             }
         } catch (Exception e) {
-            return BaseResponse.error("Failed to delete skin");
+            e.printStackTrace();
+            return BaseResponse.error("Failed to delete skin: " + e.getMessage());
         }
     }
 
     public BaseResponse<String> createDefault(User user) {
         try {
-            Skin skin = new Skin();
+            Skin skin = skinRepository.findByUser(user).orElse(new Skin());
             skin.setUser(user);
-            skin.setDefaultSkinUrl("/" + skinsDirectory + "/" + "default.png");
+
+            String defaultSkinUrl = skinsUrlPrefix + "/" + defaultSkin;
+            skin.setDefaultSkinUrl(defaultSkinUrl);
+
+            if (skin.getSkinUrl() == null) skin.setSkinUrl(defaultSkinUrl);
+
             skinRepository.save(skin);
-            return BaseResponse.success("Default skin created successfully");
+            return BaseResponse.success("Default skin assigned successfully");
         } catch (Exception e) {
-            return BaseResponse.error("Failed to create default skin");
+            e.printStackTrace();
+            return BaseResponse.error("Failed to create default skin: " + e.getMessage());
         }
     }
 
@@ -99,7 +135,6 @@ public class SkinService {
                 if (skin.getSkinType() == newSkinType) return BaseResponse.success("Skin type is already " + newSkinType);
                 skin.setSkinType(newSkinType);
                 skinRepository.save(skin);
-
                 return BaseResponse.success("Skin type changed to " + newSkinType);
             } else {
                 Skin newSkin = new Skin();
@@ -109,14 +144,19 @@ public class SkinService {
                 return BaseResponse.success("Skin created with type " + newSkinType);
             }
         } catch (Exception e) {
-            return BaseResponse.error("Failed to change skin type");
+            return BaseResponse.error("Failed to change skin type: " + e.getMessage());
         }
     }
 
-    private String getFileExtension(String fileName) {
-        if (fileName == null || !fileName.contains(".")) {
-            return "png";
-        }
-        return fileName.substring(fileName.lastIndexOf(".") + 1);
+    public String getUserSkinUrl(User user) {
+        return skinRepository.findByUser(user)
+                .map(Skin::getSkinUrl)
+                .filter(url -> url != null && !url.trim().isEmpty())
+                .orElse(skinsUrlPrefix + "/" + defaultSkin);
+    }
+
+    private boolean isPngFile(String fileName) {
+        if (fileName == null) return false;
+        return fileName.toLowerCase().endsWith(".png");
     }
 }

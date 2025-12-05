@@ -18,7 +18,7 @@ spring:
         smtp:
           auth: true
           starttls:
-            enable: trueW
+            enable: true
             required: true
 
   jpa:
@@ -39,20 +39,9 @@ jwt:
   secret: mySuperSecretKeyThatIsAtLeast32CharactersLong123!
   expiration: 720
 
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info,metrics
-  endpoint:
-    health:
-      show-details: always
-
 app:
   skins:
-    directory=skins:
-
-logging:
-  level:
-    com.example: DEBUG
-    org.springframework.security: DEBUG
+    directory: ./uploads/skins
+    url-prefix: /skins
+    default-skin: default.png
+    max-size-mb: 10
