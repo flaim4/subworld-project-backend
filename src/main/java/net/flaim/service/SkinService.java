@@ -9,6 +9,7 @@ import net.flaim.model.Skin;
 import net.flaim.model.User;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -49,6 +50,7 @@ public class SkinService {
         }
     }
 
+    @Transactional
     public BaseResponse<String> upload(User user, MultipartFile file) {
         try {
             if (file.isEmpty()) return BaseResponse.error("File is empty");
@@ -81,6 +83,7 @@ public class SkinService {
         }
     }
 
+    @Transactional
     public BaseResponse<String> delete(User user) {
         try {
             Optional<Skin> existingSkin = skinRepository.findByUser(user);
@@ -107,6 +110,7 @@ public class SkinService {
         }
     }
 
+    @Transactional
     public BaseResponse<String> createDefault(User user) {
         try {
             Skin skin = skinRepository.findByUser(user).orElse(new Skin());
@@ -125,6 +129,7 @@ public class SkinService {
         }
     }
 
+    @Transactional
     public BaseResponse<String> changeType(User user, SkinType newSkinType) {
         try {
             Optional<Skin> existingSkin = skinRepository.findByUser(user);

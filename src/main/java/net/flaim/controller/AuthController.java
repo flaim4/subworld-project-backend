@@ -14,6 +14,7 @@ import net.flaim.service.AuthService;
 import net.flaim.service.EmailService;
 import net.flaim.service.SessionService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;

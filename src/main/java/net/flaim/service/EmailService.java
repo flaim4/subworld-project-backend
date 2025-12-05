@@ -165,6 +165,7 @@ public class EmailService {
         return BaseResponse.success("");
     }
 
+    @Transactional
     private VerificationResult validateVerificationCode(EmailVerification verification, int code) {
         if (verification.getAttempts() >= 3) {
             emailRepository.delete(verification);
@@ -185,6 +186,7 @@ public class EmailService {
         return VerificationResult.success();
     }
 
+    @Transactional
     private VerificationResult validateResetCode(EmailVerification verification, int code) {
         if (verification.getAttempts() >= 3) {
             emailRepository.delete(verification);
