@@ -13,8 +13,11 @@ import java.nio.file.Paths;
 @Configuration
 public class WebConfig {
 
-    @Value("${app.skins.directory:./uploads/skins}")
+    @Value("${app.skins.directory}")
     private String skinsDirectory;
+
+    @Value("${app.avatars.directory}")
+    private String avatarsDirectory;
 
     @Bean
     public WebMvcConfigurer webMvcConfigurer() {
@@ -33,7 +36,12 @@ public class WebConfig {
                 registry.addResourceHandler("/skins/**")
                         .addResourceLocations("file:" + Paths.get(skinsDirectory).toAbsolutePath() + "/")
                         .setCachePeriod(0);
+
+                registry.addResourceHandler("/avatars/**")
+                        .addResourceLocations("file:" + Paths.get(avatarsDirectory).toAbsolutePath() + "/")
+                        .setCachePeriod(0);
             }
+
         };
     }
 }

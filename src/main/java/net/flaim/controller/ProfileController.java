@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import net.flaim.annotation.CurrentSession;
 import net.flaim.annotation.RequiresAuth;
 import net.flaim.dto.BaseResponse;
+import net.flaim.dto.profile.UserProfileResponse;
 import net.flaim.model.Session;
 import net.flaim.model.User;
 import net.flaim.service.ProfileService;
@@ -23,8 +24,8 @@ public class ProfileController {
 
     @GetMapping("/me")
     @RequiresAuth
-    public ResponseEntity<BaseResponse<User>> getProfile(@CurrentSession Session session) {
-        User user = session.getUser();
-        return ResponseEntity.ok(BaseResponse.success(user));
+    public ResponseEntity<BaseResponse<UserProfileResponse>> getProfile(@CurrentSession Session session) {
+        BaseResponse<UserProfileResponse> response = profileService.getUserProfile(session.getUser());
+        return ResponseEntity.status(response.isSuccess() ? 200 : 400).body(response);
     }
 }

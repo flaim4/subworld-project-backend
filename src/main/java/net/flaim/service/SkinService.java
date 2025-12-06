@@ -17,32 +17,49 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 public class SkinService {
-    @Value("${app.skins.directory:./uploads/skins}")
+    @Value("${app.skins.directory}")
     private String skinsDirectory;
 
-    @Value("${app.skins.url-prefix:/skins}")
+    @Value("${app.skins.url-prefix}")
     private String skinsUrlPrefix;
 
-    @Value("${app.skins.default-skin:default.png}")
+    @Value("${app.skins.default-skin}")
     private String defaultSkin;
 
-    @Value("${app.skins.max-size-mb:10}")
+    @Value("${app.skins.max-size-mb}")
     private int maxSizeMb;
+
+    @Value("${app.avatars.directory}")
+    private String avatarsDirectory;
+
+    @Value("${app.avatars.url-prefix}")
+    private String avatarsUrlPrefix;
+
+    @Value("${app.avatars.size}")
+    private int avatarSize;
+
+    @Value("${app.avatars.default}")
+    private String defaultAvatar;
 
     private long maxFileSizeBytes;
 
     private final SkinRepository skinRepository;
+    private final AvatarService avatarService;
 
     @PostConstruct
     public void init() {
         try {
             Path path = Paths.get(skinsDirectory);
             if (!Files.exists(path)) Files.createDirectories(path);
+
+            Path avatarsPath = Paths.get(avatarsDirectory);
+            if (!Files.exists(avatarsPath)) Files.createDirectories(avatarsPath);
 
             maxFileSizeBytes = maxSizeMb * 1024L * 1024L;
         } catch (IOException e) {
@@ -74,12 +91,15 @@ public class SkinService {
 
             String skinUrl = skinsUrlPrefix + "/" + filename;
             skin.setSkinUrl(skinUrl);
+
+            skin.setAvatarUrl(avatarService.generateAvatarFromSkin(user, skinUrl));
+            skin.setAvatarGeneratedAt(LocalDateTime.now());
             skinRepository.save(skin);
 
             return BaseResponse.success("PNG skin uploaded successfully");
         } catch (Exception e) {
             e.printStackTrace();
-            return BaseResponse.error("Failed to upload skin: " + e.getMessage());
+            return BaseResponse.error("Failed to upload skin");
         }
     }
 
@@ -98,7 +118,11 @@ public class SkinService {
                     if (Files.exists(filePath)) Files.delete(filePath);
                 }
 
+                avatarService.deleteAvatar(user);
+
                 skin.setSkinUrl(null);
+                skin.setAvatarUrl(null);
+                skin.setAvatarGeneratedAt(null);
                 skinRepository.save(skin);
                 return BaseResponse.success("Skin deleted successfully");
             } else {
@@ -116,16 +140,15 @@ public class SkinService {
             Skin skin = skinRepository.findByUser(user).orElse(new Skin());
             skin.setUser(user);
 
-            String defaultSkinUrl = skinsUrlPrefix + "/" + defaultSkin;
-            skin.setDefaultSkinUrl(defaultSkinUrl);
-
-            if (skin.getSkinUrl() == null) skin.setSkinUrl(defaultSkinUrl);
+            skin.setDefaultSkinUrl(skinsUrlPrefix + "/" + defaultSkin);
+            skin.setDefaultAvatarUrl(avatarsUrlPrefix + "/" + defaultAvatar);
 
             skinRepository.save(skin);
-            return BaseResponse.success("Default skin assigned successfully");
+            return BaseResponse.success("Default skin and avatar assigned successfully");
+
         } catch (Exception e) {
             e.printStackTrace();
-            return BaseResponse.error("Failed to create default skin: " + e.getMessage());
+            return BaseResponse.error("Failed to create default skin");
         }
     }
 
@@ -149,19 +172,11 @@ public class SkinService {
             }
         } catch (Exception e) {
             e.printStackTrace();
-            return BaseResponse.error("Failed to change skin type: " + e.getMessage());
+            return BaseResponse.error("Failed to change skin type");
         }
     }
 
-    public String getUserSkinUrl(User user) {
-        return skinRepository.findByUser(user)
-                .map(Skin::getSkinUrl)
-                .filter(url -> url != null && !url.trim().isEmpty())
-                .orElse(skinsUrlPrefix + "/" + defaultSkin);
-    }
-
     private boolean isPngFile(String fileName) {
-        if (fileName == null) return false;
-        return fileName.toLowerCase().endsWith(".png");
+        return fileName != null && fileName.toLowerCase().endsWith(".png");
     }
 }

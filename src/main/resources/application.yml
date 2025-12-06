@@ -36,11 +36,22 @@ spring:
     locale: en
 
 app:
+
   token:
     secret: r5QgSFRyV8L9f3wEMBZY2Xonkize0txGhW7COmND6qp
     expiration-hours: 720
+
+  uploads:
+    base-dir: ./uploads
+
   skins:
-    directory: ./uploads/skins
+    directory: uploads/skins
     url-prefix: /skins
-    default-skin: default.png
-    max-size-mb: 10
+    default-skin: default_skin.png
+    max-size-mb: 5
+
+  avatars:
+    directory: uploads/avatars
+    url-prefix: /avatars
+    default: default_avatar.png
+    size: 512

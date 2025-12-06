@@ -4,7 +4,6 @@ import jakarta.persistence.*;
 import lombok.Data;
 import java.time.LocalDateTime;
 
-
 @Data
 @Entity
 @Table(name = "skins")
@@ -18,15 +17,24 @@ public class Skin {
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
 
-    @Column(name = "skin_url", nullable = true)
+    @Column(name = "skin_url")
     private String skinUrl;
 
     @Column(name = "default_skin_url", nullable = false)
     private String defaultSkinUrl = "/skins/default.png";
 
+    @Column(name = "avatar_url")
+    private String avatarUrl;
+
+    @Column(name = "default_avatar_url", nullable = false)
+    private String defaultAvatarUrl = "/avatars/default_face.png";
+
     @Enumerated(EnumType.STRING)
     @Column(name = "skin_type", nullable = false)
     private SkinType skinType = SkinType.CLASSIC;
+
+    @Column(name = "avatar_generated_at")
+    private LocalDateTime avatarGeneratedAt;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
