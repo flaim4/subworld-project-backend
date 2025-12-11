@@ -6,21 +6,19 @@ import net.flaim.dto.BaseResponse;
 import net.flaim.dto.auth.AuthResponse;
 import net.flaim.dto.auth.LoginRequest;
 import net.flaim.dto.auth.RegisterRequest;
-import net.flaim.model.Session;
-import net.flaim.model.User;
+import net.flaim.model.*;
 import net.flaim.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -65,12 +63,13 @@ public class AuthService {
 
         if (userRepository.findByUsername(request.getUsername()).isPresent()) return BaseResponse.error("Username already taken");
 
-        User user = new User();
-        user.setUsername(request.getUsername());
-        user.setEmail(request.getEmail());
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setVerifyEmail(false);
-        user.setCreatedAt(LocalDateTime.now());
+        User user = User.builder()
+                .username(request.getUsername())
+                .email(request.getEmail())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .verifyEmail(false)
+                .createdAt(LocalDateTime.now())
+                .build();
 
         userRepository.save(user);
 
@@ -96,6 +95,7 @@ public class AuthService {
         authResponse.setToken(token);
         authResponse.setUsername(foundUser.getUsername());
         authResponse.setEmail(foundUser.getEmail());
+        authResponse.setPermissions(foundUser.getPermissions().stream().collect(Collectors.toList()));
 
         return BaseResponse.success(authResponse);
     }
